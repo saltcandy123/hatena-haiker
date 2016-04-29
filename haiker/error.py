@@ -3,17 +3,16 @@
 
 
 class HaikerError(Exception):
-    '''Raised when there is something wrong around this library.
+    '''Raised when something goes wrong around this library.
     '''
 
 
 class UnexpectedResponse(HaikerError):
     '''Raised when HTTP response is unexpected.
-    A attribute ``res`` is the response object.
     '''
 
     def __init__(self, res):
-        self.res = res
+        self._res = res
 
     def __str__(self):
         code = self.res.status_code
@@ -21,3 +20,8 @@ class UnexpectedResponse(HaikerError):
         if len(text) > 50:
             text = '{0}...'.format(text[:47])
         return '[{0}] {1}'.format(code, text)
+
+    @property
+    def res(self):
+        '''response data'''
+        return self._res

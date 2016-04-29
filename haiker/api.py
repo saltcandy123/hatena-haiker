@@ -3,9 +3,7 @@
 
 import functools
 import requests
-from . import auth as authlib
 from . import default
-from . import error
 from . import utils
 
 
@@ -13,27 +11,30 @@ class BaseAPIHandler(object):
     '''Base API handler
 
     Example:
-    >>> h = BaseAPIHandler(None, default.H_ROOT, default.UA)
-    >>> h.get('statuses/public_timeline', {'count': 3})
-    [{'created_at': '....',
-      'favorited': '...',
-      'id': '...',
-      'in_reply_to_status_id': '',
-      'in_reply_to_user_id': '',
-      'keyword': '...',
-      'link': '...',
-      'replies': [...],
-      'source': '...',
-      'target': {...},
-      'text': '....',
-      'user': {'followers_count': '...',
-               'id': '...',
-               'name': '...',
-               'profile_image_url': '...',
-               'screen_name': '...',
-               'url': 'http://h.hatena.ne.jp/...'}},
-     {...},
-     {...}]
+        >>> h = haiker.api.BaseAPIHandler(
+        ...         haiker.OAuth('MyConsumerKey', 'MyConsumerSecret',
+        ...                      'MyAccessToken', 'MyAccessTokenSecret'),
+        ...         haiker.default.H_ROOT, haiker.default.UA)
+        >>> h.get('statuses/public_timeline', {'count': 3})
+        [{'created_at': '....',
+          'favorited': '...',
+          'id': '...',
+          'in_reply_to_status_id': '',
+          'in_reply_to_user_id': '',
+          'keyword': '...',
+          'link': '...',
+          'replies': [...],
+          'source': '...',
+          'target': {...},
+          'text': '....',
+          'user': {'followers_count': '...',
+                   'id': '...',
+                   'name': '...',
+                   'profile_image_url': '...',
+                   'screen_name': '...',
+                   'url': 'http://h.hatena.ne.jp/...'}},
+         {...},
+         {...}]
     '''
     def __init__(self, auth, root, user_agent):
         self.auth = auth
@@ -62,12 +63,8 @@ class Applications(object):
     - my(): applications/my
     - start(): applications/start
     '''
-    def __init__(self, auth, user_agent=default.UA, root=default.N_ROOT):
-        '''``auth`` must be a ``None``, ``BasicAuth`` or ``OAuth`` object.
-        '''
-        if not isinstance(auth, authlib.OAuth):
-            raise error.HaikerError('first argument must be a OAuth object')
-        self._handler = BaseAPIHandler(auth, root, user_agent)
+    def __init__(self, handler):
+        self._handler = handler
 
     def my(self):
         return self._handler.get('applications/my.json')
@@ -76,15 +73,8 @@ class Applications(object):
         return self._handler.post('applications/start')
 
 
-class BaseAPICategory(object):
-    def __init__(self, handler=None):
-        if handler is None:
-            handler = BaseAPIHandler(None, default.H_ROOT, default.UA)
-        self._handler = handler
-
-
-class Statuses(BaseAPICategory):
-    '''Methods under statuses/*
+class Statuses(object):
+    '''APIs under statuses/*
 
     - public_timeline(body_formats, count, page, since)
     - keyword_timeline([required] word, count, page, since, body_formats, sort)
@@ -99,6 +89,9 @@ class Statuses(BaseAPICategory):
     - followers(url_name, page)
     - keywords(url_name, page, without_related_keywords)
     '''
+    def __init__(self, handler):
+        self._handler = handler
+
     def public_timeline(self, body_formats=None,
                         count=None, page=None, since=None):
         api = 'statuses/public_timeline.json'
@@ -209,12 +202,15 @@ class Statuses(BaseAPICategory):
         return self._handler.get(api, params)
 
 
-class Favorites(BaseAPICategory):
-    '''Methods under favorites/*
+class Favorites(object):
+    '''APIs under favorites/*
 
     - create([required] eid, body_formats):
     - destroy([required] eid, body_formats):
     '''
+    def __init__(self, handler):
+        self._handler = handler
+
     def create(self, eid, body_formats=None):
         api = 'favorites/create/{0}.json'.format(eid)
         params = {'body_formats': utils.comma(body_formats)}
@@ -226,13 +222,16 @@ class Favorites(BaseAPICategory):
         return self._handler.post(api, params)
 
 
-class Friendships(BaseAPICategory):
-    '''Methods under friendships/*
+class Friendships(object):
+    '''APIs under friendships/*
 
     - show(url_name)
     - create(url_name)
     - destroy(url_name)
     '''
+    def __init__(self, handler):
+        self._handler = handler
+
     def show(self, url_name):
         api = 'friendships/show/{0}.json'.format(url_name)
         return self._handler.get(api)
@@ -246,12 +245,15 @@ class Friendships(BaseAPICategory):
         return self._handler.post(api)
 
 
-class KeywordsRelation(BaseAPICategory):
-    '''Methods under keywords/relation/*
+class KeywordsRelation(object):
+    '''APIs under keywords/relation/*
 
     - create([required] word1, [required] word2, without_related_keywords)
     - destroy([required] word1, [required] word2, without_related_keywords)
     '''
+    def __init__(self, handler):
+        self._handler = handler
+
     def create(self, word1, word2, without_related_keywords=None):
         api = 'keywords/relation/create.json'
         is_excluded = utils.integer(without_related_keywords)
@@ -273,8 +275,8 @@ class KeywordsRelation(BaseAPICategory):
         return self._handler.post(api, params)
 
 
-class Keywords(BaseAPICategory):
-    '''Methods under keywords/*
+class Keywords(object):
+    '''APIs under keywords/*
 
     - show([required] word, without_related_keywords)
     - hot(without_related_keywords)
@@ -284,9 +286,9 @@ class Keywords(BaseAPICategory):
     - relation.create([required] word1, [required] word2, without_related_keywords)
     - relation.destroy([required] word1, [required] word2, without_related_keywords)
     '''
-    def __init__(self, *args, **kwargs):
-        self._relation = KeywordsRelation(*args, **kwargs)
-        return super().__init__(*args, **kwargs)
+    def __init__(self, handler):
+        self._relation = KeywordsRelation(handler)
+        self._handler = handler
 
     @property
     @functools.wraps(KeywordsRelation)
@@ -342,36 +344,44 @@ class Keywords(BaseAPICategory):
 
 
 class Haiku(object):
-    '''Haiku API Handler
+    '''Hatena Haiku RESTful API Handler
 
     Example:
-    >>> api = Haiku(auth)
-    >>> api.public_timeline(count=3)
-    [{'created_at': '...',
-      'favorited': '...',
-      'id': '...',
-      'in_reply_to_status_id': '',
-      'in_reply_to_user_id': '',
-      'keyword': '...',
-      'link': '...',
-      'replies': [...],
-      'source': '...',
-      'target': {...},
-      'text': '....',
-      'user': {'followers_count': '...',
-               'id': '...',
-               'name': '...',
-               'profile_image_url': '...',
-               'screen_name': '...',
-               'url': 'http://h.hatena.ne.jp/...'}},
-     {...},
-     {...}]
+        >>> api = haiker.Haiku(auth)
+        >>> api.public_timeline(count=3)
+        [{'created_at': '...',
+          'favorited': '...',
+          'id': '...',
+          'in_reply_to_status_id': '',
+          'in_reply_to_user_id': '',
+          'keyword': '...',
+          'link': '...',
+          'replies': [...],
+          'source': '...',
+          'target': {...},
+          'text': '....',
+          'user': {'followers_count': '...',
+                   'id': '...',
+                   'name': '...',
+                   'profile_image_url': '...',
+                   'screen_name': '...',
+                   'url': 'http://h.hatena.ne.jp/...'}},
+         {...},
+         {...}]
     '''
-    def __init__(self, auth=None, user_agent=default.UA, root=default.H_ROOT):
-        '''``auth`` must be a ``None``, ``BasicAuth`` or ``OAuth`` object.
+    def __init__(self, auth=None, user_agent=default.UA,
+                 root=default.H_ROOT, n_root=default.N_ROOT):
+        '''``auth`` is required to be one of these:
+
+        - ``None``
+        - ``haiker.BasicAuth`` object
+        - ``haiker.OAuth`` object
+        - ``haiker.OAuth`` object
         '''
-        h = self._handler = BaseAPIHandler(auth, root, user_agent)
         self._auth = auth
+        self._n_handler = BaseAPIHandler(auth, n_root, user_agent)
+        self._applications = Applications(self._n_handler)
+        h = self._handler = BaseAPIHandler(auth, root, user_agent)
         self._statuses = Statuses(h)
         self._favorites = Favorites(h)
         self._friendships = Friendships(h)
@@ -384,7 +394,12 @@ class Haiku(object):
     @auth.setter
     def auth(self, value):
         self._auth = value
-        self._handler.auth = value
+        self._handler.auth = self._n_handler.auth = value
+
+    @property
+    @functools.wraps(Applications)
+    def applications(self):
+        return self._applications
 
     @property
     @functools.wraps(Statuses)

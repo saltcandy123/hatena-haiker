@@ -9,9 +9,7 @@ def check_response(res):
     raise error.UnexpectedResponse(res)
 
 def comma(data):
-    if data is None:
-        return None
-    if isinstance(data, str):
+    if data is None or isinstance(data, str):
         return data
     return ','.join(data)
 

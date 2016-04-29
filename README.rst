@@ -1,13 +1,18 @@
-hatena-haiker: Python 3 Wrapper for Hatena Haiku API
-====================================================
+hatena-haiker: Hatena Haiku for Python 3
+========================================
 
-hatena-haiker is a simple library handling `Hatena Haiku <http://h.hatena.ne.jp/>`_ API.
+hatena-haiker is an unofficial library
+for the `Hatena Haiku <http://h.hatena.ne.jp/>`_ API.
+
+
+Example
+-------
 
 .. code-block:: python
 
     >>> import haiker
     >>> auth = haiker.OAuth(
-    ...    'MyConsumerKey', 'MyConsumerSecret',
+    ...     'MyConsumerKey', 'MyConsumerSecret',
     ...     'MyAccessToken', 'MyAccessTokenSecret'
     ... )
     >>> api = haiker.Haiku(auth)
@@ -31,4 +36,22 @@ hatena-haiker is a simple library handling `Hatena Haiku <http://h.hatena.ne.jp/
                'url': 'http://h.hatena.ne.jp/...'}},
      {...},
      {...}]
+
+
+Installation
+------------
+
+.. code-block:: bash
+
+    $ pip3 install --upgrade hatena-haiker
+
+
+Documentation
+-------------
+
+After completing the installation, enter the following:
+
+.. code-block:: bash
+
+    $ python3 -m pydoc haiker
 

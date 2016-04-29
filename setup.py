@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import io
 import os.path
-import re
 import sys
 import setuptools
 import haiker
 
 
-if sys.version_info < (3, 0):
-    print('This library is available in Python 3', file=sys.stderr)
-    sys.exit(1)
+assert sys.version_info >= (3, 0), 'This library is available in Python 3'
+
 
 def long_description():
     with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
         return f.read()
 
-__doc__ = haiker.__doc__
 
 setuptools.setup(
     name='hatena-haiker',
@@ -25,7 +21,7 @@ setuptools.setup(
     author='@saltcandy123',
     author_email='saltcandy123+haiker@gmail.com',
     url='https://github.com/saltcandy123/hatena-haiker/',
-    description='Python 3 wrapper for Hatena Haiku API',
+    description='Hatena Haiku for Python 3',
     long_description=long_description(),
     license=haiker.__license__,
     packages=['haiker'],
@@ -44,5 +40,5 @@ setuptools.setup(
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Software Development :: Libraries',
     ],
-    keywords='hatena haiku API',
+    keywords='hatena haiku api',
 )
