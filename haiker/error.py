@@ -1,27 +1,33 @@
 #!/usr/bin/env python3
-# coding: utf-8
+
+import functools
 
 
 class HaikerError(Exception):
-    '''Raised when something goes wrong around this library.
-    '''
-
-
-class UnexpectedResponse(HaikerError):
-    '''Raised when HTTP response is unexpected.
-    '''
-
-    def __init__(self, res):
-        self._res = res
-
-    def __str__(self):
-        code = self.res.status_code
-        text = self.res.text.replace('\n', ' ')
-        if len(text) > 50:
-            text = '{0}...'.format(text[:47])
-        return '[{0}] {1}'.format(code, text)
+    """Raised when something has gone wrong."""
+    def __init__(self, error):
+        super().__init__()
+        self._error = error
 
     @property
-    def res(self):
-        '''response data'''
-        return self._res
+    def causal_error(self):
+        """An exception object which has raised this error"""
+        return self._error
+
+    def __str__(self):
+        return str(self._error)
+
+    @classmethod
+    def replace(cls, func):
+        """Return a function which has the same behavior as func but
+        raises this exception instead of raising other exception.
+        """
+        @functools.wraps(func)
+        def call(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except cls:
+                raise
+            except Exception as e:
+                raise cls(e) from e
+        return call
