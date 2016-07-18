@@ -6,7 +6,8 @@ import time
 from . import __version__
 
 
-DEFAULT_USER_AGENT = 'python-haiker/{0}'.format(__version__)
+def user_agent(name='python-haiker', version=__version__):
+    return '{name}/{version}'.format(name=name, version=version)
 
 
 def removed_dict(dic, keys):
@@ -14,28 +15,27 @@ def removed_dict(dic, keys):
     return {kw: dic[kw] for kw in dic if kw not in keys}
 
 
-def strftime(date, date_format):
-    """Return a string expession of date.  This function is
-    like date.strftime(date_format) but adjusts the timezone
-    to UTC.
+def strftime(d, format):
+    """Return a string expession of d.  This function is like
+    d.strftime(format) but adjusts the timezone to UTC.
     """
     try:
-        date = date.astimezone(datetime.timezone.utc)
+        d = d.astimezone(datetime.timezone.utc)
     except ValueError:
-        date = time.gmtime(time.mktime(date.timetuple()))
-        return time.strftime(date_format, date)
-    return date.strftime(date_format)
+        d = time.gmtime(time.mktime(d.timetuple()))
+        return time.strftime(format, d)
+    return d.strftime(format)
 
 
 def serialize(obj, *, charset='utf-8',
-              date_format='%a, %d %B %Y %H:%M:%S GMT'):
+              datetime_format='%a, %d %B %Y %H:%M:%S GMT'):
     """Return a string expression of obj."""
     if obj is None:
         return None
     if isinstance(obj, int):  # bool is a subclass of int
         obj = str(int(obj))
     if isinstance(obj, datetime.datetime):
-        obj = strftime(obj, date_format)
+        obj = strftime(obj, datetime_format)
     if isinstance(obj, str):
         obj = obj.encode(charset)
     if isinstance(obj, bytes):

@@ -8,6 +8,9 @@ import haiker
 
 
 class TestUtils(unittest.TestCase):
+    def test_user_agent(self):
+        haiker.utils.user_agent()
+
     def test_removed_dict(self):
         f = haiker.utils.removed_dict
         d = {'a': 123, 'b': 456}

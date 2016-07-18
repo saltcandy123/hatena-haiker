@@ -48,26 +48,26 @@ class Status(object):
         'keyword', 'replies', 'source', 'target', 'text', 'user',
     )
 
-    def __init__(self, json):
+    def __init__(self, d):
         super().__init__()
-        self.link = str(json['link'])
-        self.created_at = to_datetime(json['created_at'])
-        self.favorited = int(json['favorited'])
-        self.haiku_text = none_or(str)(json.get('haiku_text'))
-        self.html = none_or(str)(json.get('html'))
-        self.html_touch = none_or(str)(json.get('html_touch'))
-        self.html_mobile = none_or(str)(json.get('html_mobile'))
-        self.id = str(json['id'])
-        raw = json.get('in_reply_to_status_id')
+        self.link = str(d['link'])
+        self.created_at = to_datetime(d['created_at'])
+        self.favorited = int(d['favorited'])
+        self.haiku_text = none_or(str)(d.get('haiku_text'))
+        self.html = none_or(str)(d.get('html'))
+        self.html_touch = none_or(str)(d.get('html_touch'))
+        self.html_mobile = none_or(str)(d.get('html_mobile'))
+        self.id = str(d['id'])
+        raw = d.get('in_reply_to_status_id')
         self.in_reply_to_status_id = none_or(str)(raw)
-        raw = json.get('in_reply_to_user_id')
+        raw = d.get('in_reply_to_user_id')
         self.in_reply_to_user_id = none_or(str)(raw)
-        self.keyword = none_or(str)(json.get('keyword'))
-        self.replies = none_or(list_of(Status))(json.get('replies'))
-        self.source = str(json['source'])
-        self.target = none_or(Target)(json.get('target'))
-        self.text = none_or(str)(json.get('text'))
-        self.user = User(json['user'])
+        self.keyword = none_or(str)(d.get('keyword'))
+        self.replies = none_or(list_of(Status))(d.get('replies'))
+        self.source = str(d['source'])
+        self.target = none_or(Target)(d.get('target'))
+        self.text = none_or(str)(d.get('text'))
+        self.user = User(d['user'])
 
     def __repr__(self):
         return _repr(self, 'link')
@@ -80,14 +80,14 @@ class User(object):
         'url',
     )
 
-    def __init__(self, json):
+    def __init__(self, d):
         super().__init__()
-        self.followers_count = int(json['followers_count'])
-        self.name = str(json['name'])
-        self.id = str(json['id'])
-        self.profile_image_url = str(json['profile_image_url'])
-        self.screen_name = str(json['screen_name'])
-        self.url = str(json['url'])
+        self.followers_count = int(d['followers_count'])
+        self.name = str(d['name'])
+        self.id = str(d['id'])
+        self.profile_image_url = str(d['profile_image_url'])
+        self.screen_name = str(d['screen_name'])
+        self.url = str(d['url'])
 
     def __repr__(self):
         return _repr(self, 'id')
@@ -100,16 +100,16 @@ class Keyword(object):
         'word', 'url_name',
     )
 
-    def __init__(self, json):
+    def __init__(self, d):
         super().__init__()
-        self.entry_count = int(json['entry_count'])
-        self.followers_count = int(json['followers_count'])
-        self.link = str(json['link'])
-        raw = json.get('related_keywords')
+        self.entry_count = int(d['entry_count'])
+        self.followers_count = int(d['followers_count'])
+        self.link = str(d['link'])
+        raw = d.get('related_keywords')
         self.related_keywords = none_or(list_of(str))(raw)
-        self.title = str(json['title'])
-        self.word = str(json['word'])
-        self.url_name = none_or(str)(json.get('url_name'))
+        self.title = str(d['title'])
+        self.word = str(d['word'])
+        self.url_name = none_or(str)(d.get('url_name'))
 
     def __repr__(self):
         return _repr(self, 'word')
@@ -119,11 +119,11 @@ class Target(object):
     """Target object"""
     __slots__ = ('title', 'word', 'url_name',)
 
-    def __init__(self, json):
+    def __init__(self, d):
         super().__init__()
-        self.title = str(json['title'])
-        self.word = str(json['word'])
-        self.url_name = none_or(str)(json.get('url_name'))
+        self.title = str(d['title'])
+        self.word = str(d['word'])
+        self.url_name = none_or(str)(d.get('url_name'))
 
     def __repr__(self):
         return _repr(self, 'word')

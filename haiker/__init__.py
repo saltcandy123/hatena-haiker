@@ -15,23 +15,26 @@ and the official API documents:
 Example:
 
 import haiker
-auth = haiker.OAuth(
-    'MyConsumerKey', 'MyConsumerSecret',
-    'MyAccessToken', 'MyAccessTokenSecret'
-)
+auth = haiker.OAuth('MyConsumerKey', 'MyConsumerSecret',
+                    'MyAccessToken', 'MyAccessTokenSecret')
 api = haiker.Haiker(auth)
-for status in api.public_timeline(count=3):
+for status in api.public_timeline(count=3, body_formats=['haiku']):
     created_at = status.created_at.strftime('%Y-%m-%d %H:%M:%S')
     print(created_at, status.user.id, status.keyword)
+    print(status.haiku_text)
+    print()
 """
 
-__version__ = '0.3.0'
+
+__version__ = '0.4.0'
 __author__ = '@saltcandy123'
 __license__ = 'MIT License'
+
 
 from .api import Haiker
 from .auth import BasicAuth, OAuth
 from .error import HaikerError
+
 
 __all__ = [
     'Haiker',

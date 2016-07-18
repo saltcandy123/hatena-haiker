@@ -1,0 +1,22 @@
+language: "python"
+
+python:
+    - "pypy3"
+    - "3.2"
+    - "3.3"
+    - "3.4"
+    - "3.5"
+
+env:
+    global:
+        - "TZ=Asia/Tokyo"
+
+script:
+    - "mkdir -p shippable/testresults shippable/codecoverage"
+    - "mv setup-shippable.cfg setup.cfg"
+    - "pip install --upgrade 'coverage<4.0' nose"
+    - "python setup.py nosetests"
+    - "pip freeze >requirements.txt && pip uninstall -y -r requirements.txt"
+    - "rm setup.cfg"
+    - "python setup.py test"
+    - "python setup.py install"

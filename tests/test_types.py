@@ -3,7 +3,7 @@
 import datetime
 import unittest
 import haiker
-from . import datatypes
+from . import samples
 
 
 class TestTypes(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(f('2010-01-02T03:04:05.000+09:00'), dt)
 
     def test_status(self):
-        status = haiker.types.Status(datatypes.STATUS)
+        status = haiker.types.Status(samples.STATUS)
         eq = self.assertEqual
         eq(status.link, 'http://h.hatena.ne.jp/xxxx/XXXX')
         eq(status.created_at,
@@ -53,7 +53,7 @@ class TestTypes(unittest.TestCase):
         repr(status)
 
     def test_user(self):
-        user = haiker.types.User(datatypes.USER)
+        user = haiker.types.User(samples.USER)
         eq = self.assertEqual
         eq(user.followers_count, 123)
         eq(user.name, 'Name')
@@ -64,7 +64,7 @@ class TestTypes(unittest.TestCase):
         repr(user)
 
     def test_keyword(self):
-        keyword = haiker.types.Keyword(datatypes.KEYWORD)
+        keyword = haiker.types.Keyword(samples.KEYWORD)
         eq = self.assertEqual
         eq(keyword.entry_count, 123)
         eq(keyword.followers_count, 456)
@@ -76,7 +76,7 @@ class TestTypes(unittest.TestCase):
         repr(keyword)
 
     def test_target(self):
-        target = haiker.types.Target(datatypes.TARGET)
+        target = haiker.types.Target(samples.TARGET)
         eq = self.assertEqual
         eq(target.title, 'Title')
         eq(target.word, 'Word')

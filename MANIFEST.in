@@ -1,1 +1,2 @@
-include README.rst LICENSE
+include README.rst LICENSE check_api.py
+recursive-include tests *.py

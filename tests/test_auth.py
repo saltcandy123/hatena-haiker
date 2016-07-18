@@ -5,13 +5,13 @@ import unittest
 import requests
 import responses
 import haiker
-from . import datatypes
+from . import samples
 
 
 URL_INITIATE = 'https://www.hatena.com/oauth/initiate'
 URL_VERIFY = 'https://www.hatena.com/oauth/token'
-TEXT_INITIATE = 'oauth_token=OAuthToken&oauth_token_secret=OAuthTokenSecret'
-TEXT_VERIFY = 'oauth_token=AccessToken&oauth_token_secret=AccessTokenSecret'
+BODY_INITIATE = 'oauth_token=OAuthToken&oauth_token_secret=OAuthTokenSecret'
+BODY_VERIFY = 'oauth_token=AccessToken&oauth_token_secret=AccessTokenSecret'
 
 
 def check(auth):
@@ -19,8 +19,8 @@ def check(auth):
     using auth.
     """
     url = re.compile('http://h\\.hatena\\.ne\\.jp/api/statuses/.+')
-    responses.add(responses.GET, url, json=datatypes.STATUS)
-    responses.add(responses.POST, url, json=datatypes.STATUS)
+    responses.add(responses.GET, url, json=samples.STATUS)
+    responses.add(responses.POST, url, json=samples.STATUS)
     api = haiker.Haiker(auth)
     api.show_status('xyz')
     api.update_status('BOT', 'Hello world')
@@ -42,8 +42,8 @@ class TestOAuth(unittest.TestCase):
 
     @responses.activate
     def test_oauth_case2(self):
-        responses.add(responses.POST, URL_INITIATE, body=TEXT_INITIATE)
-        responses.add(responses.POST, URL_VERIFY, body=TEXT_VERIFY)
+        responses.add(responses.POST, URL_INITIATE, body=BODY_INITIATE)
+        responses.add(responses.POST, URL_VERIFY, body=BODY_VERIFY)
         auth = haiker.OAuth('MyConsumerKey', 'MyConsumerSecret')
         auth.initiate(['read_public', 'write_public'])
         auth.auth_url()
@@ -60,9 +60,9 @@ class TestOAuth(unittest.TestCase):
     @responses.activate
     def test_oauth_error(self):
         responses.add(responses.POST, URL_INITIATE,
-                      body=TEXT_INITIATE, status=403)
+                      body=BODY_INITIATE, status=403)
         responses.add(responses.POST, URL_VERIFY,
-                      body=TEXT_VERIFY, status=403)
+                      body=BODY_VERIFY, status=403)
         auth = haiker.OAuth('MyConsumerKey', 'MyConsumerSecret')
         self._check_403(auth.initiate, ['read_public', 'write_public'])
         with self.assertRaises(haiker.HaikerError) as cm:

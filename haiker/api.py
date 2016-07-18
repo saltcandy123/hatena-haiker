@@ -12,12 +12,10 @@ class BaseAPIHandler(object):
     Example:
 
     >>> h = haiker.api.BaseAPIHandler(
-    ...         haiker.OAuth(
-    ...             'MyConsumerKey', 'MyConsumerSecret',
-    ...             'MyAccessToken', 'MyAccessTokenSecret'
-    ...         ),
+    ...         haiker.OAuth('MyConsumerKey', 'MyConsumerSecret',
+    ...                      'MyAccessToken', 'MyAccessTokenSecret'),
     ...         'http://h.hatena.ne.jp/api',
-    ...         haiker.utils.DEFAULT_USER_AGENT
+    ...         haiker.utils.user_agent()
     ... )
     >>> statuses = h.get('/statuses/public_timeline.json', {'count': 3})
     >>> len(statuses)
@@ -59,12 +57,10 @@ class Haiker(object):
     Example:
 
     >>> import haiker
-    >>> auth = haiker.OAuth(
-    ...     'MyConsumerKey', 'MyConsumerSecret',
-    ...     'MyAccessToken', 'MyAccessTokenSecret'
-    ... )
+    >>> auth = haiker.OAuth('MyConsumerKey', 'MyConsumerSecret',
+    ...                     'MyAccessToken', 'MyAccessTokenSecret')
     >>> api = haiker.Haiker(auth)
-    >>> statuses = api.public_timeline(count=3)
+    >>> statuses = api.public_timeline(count=3, body_formats=['haiku'])
     >>> len(statuses)
     3
     >>> status = statuses[0]
@@ -75,10 +71,10 @@ class Haiker(object):
     """
     @error.HaikerError.replace
     def __init__(self, auth=None, *,
-                 user_agent=utils.DEFAULT_USER_AGENT,
+                 user_agent=utils.user_agent(),
                  root='http://h.hatena.ne.jp/api'):
-        """auth is required to be None, a haiker.BasicAuth object
-        or haiker.OAuth object.
+        """auth is used when calling API.  It is required to be
+        None, a haiker.BasicAuth object or a haiker.OAuth object.
         """
         super().__init__()
         self._handler = BaseAPIHandler(auth, root, user_agent)
@@ -150,11 +146,11 @@ class Haiker(object):
     def update_status(self, keyword, status, *, in_reply_to_status_id=None,
                       source=None, files=None, body_formats=None):
         """statuses/update"""
-        params = utils.removed_dict(locals(), {'self', 'files'})
+        data = utils.removed_dict(locals(), {'self', 'files'})
         if files is not None:
             files = [('file', f) for f in files]
         path = '/statuses/update.json'
-        res = self._handler.post(path, None, params, files)
+        res = self._handler.post(path, data=data, files=files)
         return types.Status(res)
 
     @error.HaikerError.replace
@@ -194,7 +190,7 @@ class Haiker(object):
     def show_user(self, url_name=None):
         """friendships/show"""
         if url_name is None:
-            path = '/friendships/show.json'.format(url_name)
+            path = '/friendships/show.json'
         else:
             path = '/friendships/show/{0}.json'.format(url_name)
         res = self._handler.get(path)
@@ -267,14 +263,14 @@ class Haiker(object):
         return types.list_of(types.User)
 
     @error.HaikerError.replace
-    def add_friend(self, url_name):
+    def follow_user(self, url_name):
         """friendships/create"""
         path = '/friendships/create/{0}.json'.format(url_name)
         res = self._handler.post(path)
         return types.User(res)
 
     @error.HaikerError.replace
-    def remove_friend(self, url_name):
+    def unfollow_user(self, url_name):
         """friendships/destroy"""
         path = '/friendships/destroy/{0}.json'.format(url_name)
         res = self._handler.post(path)
@@ -293,7 +289,7 @@ class Haiker(object):
         return types.list_of(types.Keyword)
 
     @error.HaikerError.replace
-    def add_favorite_keyword(self, word, *, without_related_keywords=None):
+    def follow_keyword(self, word, *, without_related_keywords=None):
         """keywords/create"""
         params = utils.removed_dict(locals(), {'self'})
         path = '/keywords/create.json'
@@ -301,7 +297,7 @@ class Haiker(object):
         return types.Keyword(res)
 
     @error.HaikerError.replace
-    def remove_favorite_keyword(self, word, *, without_related_keywords=None):
+    def unfollow_keyword(self, word, *, without_related_keywords=None):
         """keywords/destroy"""
         params = utils.removed_dict(locals(), {'self'})
         path = '/keywords/destroy.json'

@@ -9,7 +9,7 @@ import unittest
 import requests
 import responses
 import haiker
-from . import datatypes
+from . import samples
 
 
 def all_combinations(iterable):
@@ -66,10 +66,26 @@ def find_args(func, kwargs):
     return required, optional
 
 
+class TestTestAPIFuncs(unittest.TestCase):
+    def test_all_combinations(self):
+        a = [''.join(x) for x in all_combinations('abc')]
+        b = ['abc', 'ab', 'ac', 'bc', 'a', 'b', 'c', '']
+        self.assertEqual(a, b)
+
+    def test_find_args(self):
+        f = haiker.error.HaikerError.replace(
+                lambda a, b, c, d, e=1, f=2, *, g, h, i=3, j=4, k=5: 0
+            )
+        d = {kw: 1 for kw in 'abcdefghijkxyz'}
+        required, optional = find_args(f, d)
+        self.assertEqual(required, {'a', 'b', 'c', 'd', 'g', 'h'})
+        self.assertEqual(optional, {'e', 'f', 'i', 'j', 'k'})
+
+
 def change(json):
     """Change the response of responses mock to json."""
     responses.reset()
-    url = re.compile('http://h\\.hatena\\.ne\\.jp/api/.+')
+    url = re.compile('http://h\\.hatena\\.ne\\.jp/api/.+\\.json')
     responses.add(responses.GET, url, json=json)
     responses.add(responses.POST, url, json=json)
 
@@ -108,28 +124,28 @@ class TestBaseAPIHandler(unittest.TestCase):
     @responses.activate
     def test_get(self):
         url = 'http://h.hatena.ne.jp/api/get/method.json'
-        responses.add(responses.GET, url, json=datatypes.STATUS)
+        responses.add(responses.GET, url, json=samples.STATUS)
         self.api.get('/get/method.json')
         responses.reset()
-        responses.add(responses.GET, url, status=403, json=datatypes.STATUS)
+        responses.add(responses.GET, url, status=403, json=samples.STATUS)
         with self.assertRaises(requests.HTTPError):
             self.api.get('/get/method.json')
 
     @responses.activate
     def test_post(self):
         url = 'http://h.hatena.ne.jp/api/post/method.json'
-        responses.add(responses.POST, url, json=datatypes.STATUS)
+        responses.add(responses.POST, url, json=samples.STATUS)
         self.api.post('/post/method.json')
         responses.reset()
-        responses.add(responses.POST, url, status=403, json=datatypes.STATUS)
+        responses.add(responses.POST, url, status=403, json=samples.STATUS)
         with self.assertRaises(requests.HTTPError):
             self.api.post('/post/method.json')
 
     @responses.activate
     def test_suspicious_url(self):
-        url = re.compile('http://h.hatena.ne.jp/api/get/.+.json')
-        responses.add(responses.GET, url, json=datatypes.STATUS)
-        self.api.get('/get/Th1s-1S_N0rm4L.json')
+        url = re.compile('http://h\\.hatena\\.ne\\.jp/api/get/.+\\.json')
+        responses.add(responses.GET, url, json=samples.STATUS)
+        self.api.get('/get/Th1s-1S_s4F3.json')
         malicious_list = ['../../malicious', '////malicious', '\uff21', '# ']
         for s in malicious_list:
             with self.assertRaises(ValueError):
@@ -147,38 +163,37 @@ class TestHaiker(unittest.TestCase):
         auth2 = haiker.BasicAuth('MyUsername2', 'MyPassword2')
         api.auth = auth2
         self.assertIs(api.auth, auth2)
-        self.assertIs(api._handler.auth, auth2)
 
     # Timeline APIs
     @responses.activate
     def test_public_timeline(self):
-        change([datatypes.STATUS])
+        change([samples.STATUS])
         check(self.api.public_timeline)
 
     @responses.activate
     def test_keyword_timeline(self):
-        change([datatypes.STATUS])
+        change([samples.STATUS])
         check(self.api.keyword_timeline)
 
     @responses.activate
     def test_user_timeline(self):
-        change([datatypes.STATUS])
+        change([samples.STATUS])
         check(self.api.user_timeline)
 
     @responses.activate
     def test_friends_timeline(self):
-        change([datatypes.STATUS])
+        change([samples.STATUS])
         check(self.api.friends_timeline)
 
     @responses.activate
     def test_album(self):
-        change([datatypes.STATUS])
+        change([samples.STATUS])
         check(self.api.album)
 
     # Entry and star APIs
     @responses.activate
     def test_update_status(self):
-        change(datatypes.STATUS)
+        change(samples.STATUS)
         kwargs = {
             'keyword': 'BOT',
             'status': 'hello world',
@@ -193,87 +208,87 @@ class TestHaiker(unittest.TestCase):
 
     @responses.activate
     def test_show_status(self):
-        change(datatypes.STATUS)
+        change(samples.STATUS)
         check(self.api.show_status)
 
     @responses.activate
     def test_delete_status(self):
-        change(datatypes.STATUS)
+        change(samples.STATUS)
         check(self.api.delete_status, kwargs={'author_url_name': 'me'})
 
     @responses.activate
     def test_add_star(self):
-        change(datatypes.STATUS)
+        change(samples.STATUS)
         check(self.api.add_star)
 
     @responses.activate
     def test_remove_star(self):
-        change(datatypes.STATUS)
+        change(samples.STATUS)
         check(self.api.remove_star)
 
     # User and keyword APIs
     @responses.activate
     def test_show_user(self):
-        change(datatypes.USER)
+        change(samples.USER)
         check(self.api.show_user)
 
     @responses.activate
     def test_show_keyword(self):
-        change(datatypes.KEYWORD)
+        change(samples.KEYWORD)
         check(self.api.show_keyword)
 
     @responses.activate
     def test_hot_keywords(self):
-        change([datatypes.KEYWORD])
+        change([samples.KEYWORD])
         check(self.api.hot_keywords)
 
     @responses.activate
     def test_keywords_list(self):
-        change([datatypes.KEYWORD])
+        change([samples.KEYWORD])
         check(self.api.keyword_list)
 
     @responses.activate
     def test_associate_keywords(self):
-        change(datatypes.KEYWORD)
+        change(samples.KEYWORD)
         check(self.api.associate_keywords)
 
     @responses.activate
     def test_dissociate_keywords(self):
-        change(datatypes.KEYWORD)
+        change(samples.KEYWORD)
         check(self.api.dissociate_keywords)
 
     # Favorite APIs
     @responses.activate
     def test_friends(self):
-        change([datatypes.USER])
+        change([samples.USER])
         check(self.api.friends)
 
     @responses.activate
     def test_followers(self):
-        change([datatypes.USER])
+        change([samples.USER])
         check(self.api.followers)
 
     @responses.activate
-    def test_add_friend(self):
-        change(datatypes.USER)
-        check(self.api.add_friend)
+    def test_follow_user(self):
+        change(samples.USER)
+        check(self.api.follow_user)
 
     @responses.activate
-    def test_remove_friend(self):
-        change(datatypes.USER)
-        check(self.api.remove_friend)
+    def test_unfollow_user(self):
+        change(samples.USER)
+        check(self.api.unfollow_user)
 
     @responses.activate
     def test_favorite_keywords(self):
-        change([datatypes.KEYWORD])
+        change([samples.KEYWORD])
         check(self.api.favorite_keywords)
 
     @responses.activate
-    def test_add_favorite_keyword(self):
-        change(datatypes.KEYWORD)
-        check(self.api.add_favorite_keyword)
+    def test_follow_keyword(self):
+        change(samples.KEYWORD)
+        check(self.api.follow_keyword)
 
     @responses.activate
-    def test_remove_favorite_keyword(self):
-        change(datatypes.KEYWORD)
-        check(self.api.remove_favorite_keyword)
+    def test_unfollow_keyword(self):
+        change(samples.KEYWORD)
+        check(self.api.unfollow_keyword)

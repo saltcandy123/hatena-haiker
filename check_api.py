@@ -2,30 +2,32 @@
 
 import argparse
 import datetime
+import functools
 import pprint
 import readline
 import time
 import haiker
 
 
-_original_request = haiker.api.BaseAPIHandler._request
+def _request(func):
+    @functools.wraps(func)
+    def req(self, path, *args, **kwargs):
+        time.sleep(5)
+        print('[{0}]'.format(path))
+        retval = data = func(self, path, *args, **kwargs)
+        if isinstance(data, list):
+            print('Number of Elements: {0}'.format(len(retval)))
+            if len(data) > 0:
+                print('First Element:')
+                data = data[0]
+        pprint.pprint(data)
+        print()
+        return retval
+    return req
 
 
-def _request(self, method, path, *args, **kwargs):
-    time.sleep(5)
-    print('[{0}]'.format(path))
-    retval = data = _original_request(self, method, path, *args, **kwargs)
-    if isinstance(retval, list):
-        print('Number of Elements: {0}'.format(len(retval)))
-        if len(retval) > 0:
-            print('First Element:')
-            data = data[0]
-    pprint.pprint(data)
-    print()
-    return retval
-
-
-haiker.api.BaseAPIHandler._request = _request
+haiker.api.BaseAPIHandler.get = _request(haiker.api.BaseAPIHandler.get)
+haiker.api.BaseAPIHandler.post = _request(haiker.api.BaseAPIHandler.post)
 
 
 class APIChecker(object):
@@ -34,10 +36,15 @@ class APIChecker(object):
         self.keyword = keyword
         self.someone = someone
 
+    @staticmethod
+    def _print_title(text):
+        n = len(text) + 4
+        print('=' * n)
+        print('* {0} *'.format(text))
+        print('=' * n)
+
     def check_without_auth(self):
-        print('============')
-        print('WITHOUT AUTH')
-        print('============')
+        self._print_title('Checking APIs available without auth')
         api = haiker.Haiker()
         # Timeline APIs
         api.public_timeline()
@@ -54,7 +61,7 @@ class APIChecker(object):
         api.friends(self.someone)
         api.followers(self.someone)
 
-    def check_with_auth(self, auth):
+    def _check_with_auth(self, auth):
         api = haiker.Haiker(auth)
         url_name = api.show_user().screen_name
         user_keyword = 'id:{0}'.format(url_name)
@@ -74,38 +81,34 @@ class APIChecker(object):
         # Favorite APIs
         api.friends()
         api.followers()
-        api.add_friend(self.someone)
-        api.remove_friend(self.someone)
+        api.follow_user(self.someone)
+        api.unfollow_user(self.someone)
         api.favorite_keywords(self.someone)
-        api.add_favorite_keyword(self.keyword)
-        api.remove_favorite_keyword(self.keyword)
+        api.follow_keyword(self.keyword)
+        api.unfollow_keyword(self.keyword)
 
     def check_with_basic_auth(self, username, password):
-        print('==========')
-        print('BASIC AUTH')
-        print('==========')
+        self._print_title('Checking APIs with Basic Authentication')
         auth = haiker.BasicAuth(username, password)
-        self.check_with_auth(auth)
+        self._check_with_auth(auth)
 
     def check_with_oauth(self, consumer_key, consumer_secret,
                          oauth_token=None, token_secret=None):
-        print('=====')
-        print('OAUTH')
-        print('=====')
+        self._print_title('Checking APIs with OAuth')
         if oauth_token is None or token_secret is None:
             auth = haiker.OAuth(consumer_key, consumer_secret)
             auth.initiate(['read_public', 'write_public'])
             print('GOTO: {url}'.format(url=auth.auth_url()))
             verifier = input('verifier: ').strip()
             token, secret = auth.verify(verifier)
-            print('oauth_toen: {0}'.format(token))
+            print('oauth_token: {0}'.format(token))
             print('oauth_secret: {0}'.format(secret))
             print()
         else:
             auth = haiker.OAuth(consumer_key, consumer_secret,
                                 oauth_token, token_secret)
         api = haiker.Haiker(auth)
-        self.check_with_auth(auth)
+        self._check_with_auth(auth)
 
     @classmethod
     def main(cls):

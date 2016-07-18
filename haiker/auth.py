@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import functools
 import urllib.parse
 import requests
 import requests_oauthlib
@@ -39,10 +40,12 @@ class OAuth(object):
     ('MyAccessToken', 'MyAccessTokenSecret')
     >>> api = haiker.Haiker(auth)
     """
+    _OAuthHandler = requests_oauthlib.OAuth1
+
     @error.HaikerError.replace
     def __init__(self, consumer_key, consumer_secret=None,
                  oauth_token=None, oauth_token_secret=None, *,
-                 user_agent=utils.DEFAULT_USER_AGENT):
+                 user_agent=utils.user_agent()):
         super().__init__()
         self._keys = {
             'client_key': consumer_key,
@@ -53,6 +56,7 @@ class OAuth(object):
         self.user_agent = user_agent
         self._auth = self._make_auth(**self._keys)
 
+    @functools.wraps(_OAuthHandler.__call__)
     def __call__(self, *args, **kwargs):
         return self._auth.__call__(*args, **kwargs)
 
@@ -81,14 +85,14 @@ class OAuth(object):
     @error.HaikerError.replace
     def verify(self, oauth_verifier, *,
                url='https://www.hatena.com/oauth/token'):
-        """Fetch an access token pair.  This pair can be two arguments
-        in OAuth(): oauth_token and oauth_token_secret.
+        """Fetch an access token pair.  This pair is used as two
+        arguments of OAuth(): oauth_token and oauth_token_secret.
         """
         auth = self._make_auth(verifier=oauth_verifier, **self._keys)
         return self._receive_token(url, auth)
 
     def _make_auth(self, **kwargs):
-        return requests_oauthlib.OAuth1(**kwargs)
+        return self._OAuthHandler(**kwargs)
 
     def _receive_token(self, url, auth, data=None):
         headers = {'User-Agent': self.user_agent}
